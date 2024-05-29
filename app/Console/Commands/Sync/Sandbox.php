@@ -4,6 +4,7 @@ namespace App\Console\Commands\Sync;
 
 use App\Services\Sync\Sync;
 use Illuminate\Console\Command;
+use Illuminate\Support\Str;
 
 class Sandbox extends Command
 {
@@ -23,9 +24,17 @@ class Sandbox extends Command
 
     /**
      * Execute the console command.
+     * @throws \JsonException
      */
     public function handle()
     {
-        dd(Sync::run($this->option('table')));
+        if ($this->option('table') && Str::substrCount($this->option('table'), ',') > 0) {
+            foreach (explode(',', $this->option('table')) as $data) {
+                $this->info($data);
+                Sync::run($data);
+            }
+            return;
+        }
+        Sync::run($this->option('table'));
     }
 }

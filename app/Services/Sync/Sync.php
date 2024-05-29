@@ -11,6 +11,8 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use Symfony\Component\Console\Helper\ProgressBar;
+use Symfony\Component\Console\Output\ConsoleOutput;
 
 class Sync
 {
@@ -18,25 +20,31 @@ class Sync
     /**
      * @throws \JsonException
      */
-    public static function run(string $table = null): void
+    public static function run(string $table = null, bool $delete = false): void
     {
         if ($table) {
-            static::execute($table);
+            static::execute($table, $delete);
             return;
         }
         foreach (static::getTables() as $data) {
-            static::execute($data->name);
+            static::execute($data->name, $delete);
         }
     }
 
     /**
      * @throws \JsonException
      */
-    public static function execute(string $table): void
+    public static function execute(string $table, bool $delete = false): void
     {
         $table = Str::upper($table);
-        Log::channel('sync')->info("Iniciando integração da tabela $table");
+        $tableOriginal = $table;
+        $table = Seed::getSiblingTable($table);
+        Log::channel('sync')->info("Iniciando integração da tabela $tableOriginal");
         $columns = static::getColumns($table);
+        $columnsOriginal = static::getColumns($tableOriginal);
+        $tables = collect(static::getTables());
+        $type = $tables->where('name', $tableOriginal)->pluck('type')[0];
+        Log::channel('sync')->info("Integração do tipo: $type");
         $rows = (new SeniorNew())
             ->setTable($table)
             ->orderBy(DB::raw($columns->keys_raw))
@@ -50,6 +58,8 @@ class Sync
         $logData['old_delete'] = 0;
         $logData['execution_start'] = Carbon::now();
 
+        $progressBar = new ProgressBar(new ConsoleOutput(), count($rows));
+        $progressBar->start();
         foreach ($rows as $row) {
             try {
                 $verify = false;
@@ -59,12 +69,12 @@ class Sync
                     $keys[$key] = $row[$key];
                 }
 
-                $instance = (new SeniorOld())->setTable($table)->where($keys);
+                $instance = (new SeniorOld())->setTable($tableOriginal)->where($keys);
 
                 if ($instance->exists()) {
                     $verify = json_encode(
-                            $instance->orderBy(DB::raw($columns->keys_raw))
-                                ->select(DB::raw($columns->raw))
+                            $instance->orderBy(DB::raw($columnsOriginal->keys_raw))
+                                ->select(DB::raw($columnsOriginal->raw))
                                 ->first()
                                 ->toArray(),
                             JSON_THROW_ON_ERROR
@@ -78,7 +88,7 @@ class Sync
                         $data[$key] = $row[$key];
                     }
 
-                    if ($instance->exists()) {
+                    if ($type === 'DEFAULT' && $instance->exists()) {
                         Log::channel('sync')->info(
                             "Registro encontrado no BD antigo: ".json_encode(
                                 $keys,
@@ -101,7 +111,15 @@ class Sync
                                 JSON_THROW_ON_ERROR
                             ).' iniciando a inserção'
                         );
-                        $instance->create($data);
+
+                        if ($type === 'DEFAULT') {
+                            $instance->create($data);
+                        }
+
+                        if ($type === 'SEED') {
+                            Seed::{$tableOriginal}($keys);
+                        }
+
                         Log::channel('sync')->info(
                             "Registro não encontrado no BD antigo: ".json_encode(
                                 $keys,
@@ -114,42 +132,48 @@ class Sync
             } catch (Exception $e) {
                 Log::channel('sync')->error($e->getMessage());
             }
+            $progressBar->advance();
         }
+        $progressBar->finish();
 
-        foreach (
-            (new SeniorOld())->setTable($table)
+        if ($delete) {
+            $rows = (new SeniorOld())->setTable($table)
                 ->select(DB::raw($columns->raw))
                 ->get()
-                ->toArray() as $row
-        ) {
-            try {
-                $keys = [];
-                foreach ($columns->keys as $key) {
-                    $key = Str::lower($key);
-                    $keys[$key] = $row[$key];
+                ->toArray();
+            $progressBar = new ProgressBar(new ConsoleOutput(), count($rows));
+            $progressBar->start();
+            foreach ($rows as $row) {
+                try {
+                    $keys = [];
+                    foreach ($columns->keys as $key) {
+                        $key = Str::lower($key);
+                        $keys[$key] = $row[$key];
+                    }
+                    $instance = (new SeniorNew())->setTable($table)->where($keys);
+                    if (!$instance->exists()) {
+                        Log::channel('sync')->info(
+                            "Registro não encontrado no BD novo: ".json_encode(
+                                $keys,
+                                JSON_THROW_ON_ERROR
+                            ).' iniciando a exclusão'
+                        );
+                        (new SeniorOld())->setTable($table)->where($keys)->delete();
+                        Log::channel('sync')->info(
+                            "Registro não encontrado no BD novo: ".json_encode(
+                                $keys,
+                                JSON_THROW_ON_ERROR
+                            ).' excluído com sucesso!'
+                        );
+                        ++$logData['old_delete'];
+                    }
+                } catch (Exception $e) {
+                    Log::channel('sync')->error($e->getMessage());
                 }
-                $instance = (new SeniorNew())->setTable($table)->where($keys);
-                if (!$instance->exists()) {
-                    Log::channel('sync')->info(
-                        "Registro não encontrado no BD novo: ".json_encode(
-                            $keys,
-                            JSON_THROW_ON_ERROR
-                        ).' iniciando a exclusão'
-                    );
-                    (new SeniorOld())->setTable($table)->where($keys)->delete();
-                    Log::channel('sync')->info(
-                        "Registro não encontrado no BD novo: ".json_encode(
-                            $keys,
-                            JSON_THROW_ON_ERROR
-                        ).' excluído com sucesso!'
-                    );
-                    ++$logData['old_delete'];
-                }
-            } catch (Exception $e) {
-                Log::channel('sync')->error($e->getMessage());
             }
         }
 
+        Log::channel('sync')->info("Tabela relacionada: ".$table);
         Log::channel('sync')->info("Qtd. Registros: ".$logData['new_rows']);
         Log::channel('sync')->info("Insert: ".$logData['old_insert']);
         Log::channel('sync')->info("Update: ".$logData['old_update']);
@@ -157,7 +181,7 @@ class Sync
         Log::channel('sync')->info(
             "Tempo de execução: ".Carbon::now()->diff($logData['execution_start'])->format('%H:%I:%S')
         );
-        Log::channel('sync')->info("Finalizando integração da tabela $table");
+        Log::channel('sync')->info("Finalizando integração da tabela $tableOriginal");
         Log::channel('sync')->info("------------------------------------------------------------------------");
     }
 
@@ -213,6 +237,7 @@ class Sync
                     'name'        => $data[2],
                     'description' => $data[1],
                     'code'        => $data[0],
+                    'type'        => $data[3],
                 ];
             }
         }

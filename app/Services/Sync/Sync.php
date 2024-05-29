@@ -188,7 +188,7 @@ class Sync
     private static function getColumns(string $table): object
     {
         $columnsSeniorOld = collect(Schema::connection('senior_old')->getColumns($table));
-        $columnsSeniorNew = collect(Schema::connection('senior_old')->getColumns($table));
+        $columnsSeniorNew = collect(Schema::connection('senior_new')->getColumns($table));
         $columnsMerged = [];
         foreach ($columnsSeniorOld as $column) {
             $filteredSeniorNew = $columnsSeniorNew->where('name', $column['name'])->all();

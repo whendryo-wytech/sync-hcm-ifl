@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands\Database;
 
+use App\Models\SeniorOld;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 
@@ -26,6 +27,7 @@ class Version extends Command
      */
     public function handle()
     {
-        dd(DB::connection('senior_new')->select('select * from r030emp'));
+        $this->info("Senior Old: " . DB::connection('senior_old')->select('SELECT * FROM v$version')[0]->banner);
+        $this->info("Senior New: " . DB::connection('senior_new')->select('SELECT * FROM v$version')[0]->banner);
     }
 }

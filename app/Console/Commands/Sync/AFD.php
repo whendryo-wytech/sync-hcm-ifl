@@ -2,17 +2,17 @@
 
 namespace App\Console\Commands\Sync;
 
-use App\Services\Sync\AFD;
+use App\Services\Sync\AFD as AFDService;
 use Illuminate\Console\Command;
 
-class Sandbox extends Command
+class AFD extends Command
 {
     /**
      * The name and signature of the console command.
      *
      * @var string
      */
-    protected $signature = 'sync:sandbox';
+    protected $signature = 'sync:afd';
 
     /**
      * The console command description.
@@ -27,6 +27,6 @@ class Sandbox extends Command
      */
     public function handle()
     {
-        AFD::execute();
+        AFDService::execute();
     }
 }

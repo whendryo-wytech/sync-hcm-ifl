@@ -65,6 +65,13 @@ return [
             'replace_placeholders' => true,
         ],
 
+        'afd' => [
+            'driver'               => 'single',
+            'path'                 => storage_path("logs/afd-".date('Y-m-d', strtotime('now')).".log"),
+            'level'                => env('LOG_LEVEL', 'debug'),
+            'replace_placeholders' => true,
+        ],
+
         'single' => [
             'driver'               => 'single',
             'path'                 => storage_path('logs/laravel.log'),

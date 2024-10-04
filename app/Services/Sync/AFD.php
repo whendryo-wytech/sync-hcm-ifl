@@ -22,7 +22,7 @@ class AFD
         $devices = DB::connection('senior_old')->select(
             "   select codrlg
                       ,desrlg
-                      ,numeip
+                      ,regexp_replace(numeip, '0*([0-9]+)', '\\1') AS numeip
                 from r058rlg a
                 where 1=1
                   and modrlg = 350

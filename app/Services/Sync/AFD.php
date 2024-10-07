@@ -53,7 +53,7 @@ class AFD
                 if ($response->ok()) {
                     Log::channel('afd')->info("Requisição de login: OK");
 
-                    $date = Carbon::now()->subMonth();
+                    $date = Carbon::now()->subDays(env('CONTROLID_BEFORE_DAYS', 5));
 
                     $url = "https://$device->numeip".static::$urlAfd.$response->json('session');
                     $body = [

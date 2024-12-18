@@ -3,6 +3,7 @@
 namespace App\Services\Sync;
 
 use Carbon\Carbon;
+use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -81,7 +82,7 @@ class AFD
                         Log::channel('afd')->info("Requisição de AFD salvo: ".Storage::disk('afd')->path($fileName));
                     }
                 }
-            } catch (\Illuminate\Http\Client\ConnectionException $e) {
+            } catch (ConnectionException $e) {
                 Log::channel('afd')->info("Erro: ".$e->getMessage());
             }
 

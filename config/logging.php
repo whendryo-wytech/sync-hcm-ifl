@@ -72,6 +72,13 @@ return [
             'replace_placeholders' => true,
         ],
 
+        'biometric' => [
+            'driver'               => 'single',
+            'path'                 => storage_path("logs/biometric-".date('Y-m-d', strtotime('now')).".log"),
+            'level'                => env('LOG_LEVEL', 'debug'),
+            'replace_placeholders' => true,
+        ],
+
         'single' => [
             'driver'               => 'single',
             'path'                 => storage_path('logs/laravel.log'),

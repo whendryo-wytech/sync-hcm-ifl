@@ -76,26 +76,33 @@ class BiometricTemplate
             Log::channel('biometric')->info(
                 "------------------------------------------------------------------------"
             );
-            foreach (static::getDevices() as $device) {
-                $deviceName = $device->codrlg.' - '.$device->desrlg;
-                Log::channel('biometric')->info("Iniciando Processo da Biometria $deviceName");
-                Log::channel('biometric')->info("IP: $device->numeip");
 
-                $token = static::getToken($device);
-                if (!$token) {
-                    Log::channel('biometric')->info("Processo da Biometria: Não foi possível obter o token");
-                }
-                if ($token) {
-                    static::delete($device, $token, collect([...$employees['D'] ?? [], ...$employees['U'] ?? []]));
-                    static::create($device, $token, collect([...$employees['I'] ?? [], ...$employees['U'] ?? []]));
-                }
-                Log::channel('biometric')->info("Finalizando Processo da Biometria $deviceName");
-                Log::channel('biometric')->info(
-                    "------------------------------------------------------------------------"
-                );
+            if (!$employees) {
+                Log::channel('biometric')->info("Requisição Processo: Não há informações para serem integradas");
             }
-            if ($deletePendencies) {
-                (new SeniorOld())->setTable('RTC_PENDENCIES')->where('TABLENAME', 'R070BIO')->delete();
+
+            if ($employees) {
+                foreach (static::getDevices() as $device) {
+                    $deviceName = $device->codrlg.' - '.$device->desrlg;
+                    Log::channel('biometric')->info("Iniciando Processo da Biometria $deviceName");
+                    Log::channel('biometric')->info("IP: $device->numeip");
+
+                    $token = static::getToken($device);
+                    if (!$token) {
+                        Log::channel('biometric')->info("Processo da Biometria: Não foi possível obter o token");
+                    }
+                    if ($token) {
+                        static::delete($device, $token, collect([...$employees['D'] ?? [], ...$employees['U'] ?? []]));
+                        static::create($device, $token, collect([...$employees['I'] ?? [], ...$employees['U'] ?? []]));
+                    }
+                    Log::channel('biometric')->info("Finalizando Processo da Biometria $deviceName");
+                    Log::channel('biometric')->info(
+                        "------------------------------------------------------------------------"
+                    );
+                }
+                if ($deletePendencies) {
+                    (new SeniorOld())->setTable('RTC_PENDENCIES')->where('TABLENAME', 'R070BIO')->delete();
+                }
             }
         } catch (Exception $e) {
             Log::channel('biometric')->info("Processo de Biometria: Erro ".$e->getMessage());

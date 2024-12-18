@@ -68,15 +68,15 @@ class BiometricTemplate
             ];
         }
 
+        if ($deletePendencies) {
+            (new SeniorOld())->setTable('RTC_PENDENCIES')->where('TABLENAME', 'R070BIO')->delete();
+        }
+
         try {
             Log::channel('biometric')->info("Iniciando Processo de Biometria");
             Log::channel('biometric')->info(
                 "Processo da Biometria: Apagar PENDENCIES? ".($deletePendencies ? 'Sim' : 'Não')
             );
-            Log::channel('biometric')->info(
-                "------------------------------------------------------------------------"
-            );
-
             if (!$employees) {
                 Log::channel('biometric')->info("Requisição Processo: Não há informações para serem integradas");
             }
@@ -99,9 +99,6 @@ class BiometricTemplate
                     Log::channel('biometric')->info(
                         "------------------------------------------------------------------------"
                     );
-                }
-                if ($deletePendencies) {
-                    (new SeniorOld())->setTable('RTC_PENDENCIES')->where('TABLENAME', 'R070BIO')->delete();
                 }
             }
         } catch (Exception $e) {

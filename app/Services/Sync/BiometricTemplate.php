@@ -17,6 +17,7 @@ class BiometricTemplate
     private static string $urlLogin = '/login.fcgi';
     private static string $urlDelete = '/remove_users.fcgi?session=';
     private static string $urlCreate = '/add_users.fcgi?session=';
+    private static string $urlExport = '/export_users_csv.fcgi?session=';
 
     /**
      * @throws \JsonException
@@ -163,9 +164,130 @@ class BiometricTemplate
     /**
      * @throws \JsonException
      */
+    public static function reload(): void
+    {
+        Log::channel('biometric')->info("Iniciando Processo de Recarregamento de Biometria");
+
+        $data = DB::connection('senior_old')->select(
+            "SELECT A.NUMEMP
+                          ,A.TIPCOL
+                          ,A.NUMCAD
+                          ,B.NOMFUN
+                          ,B.NUMPIS
+                          ,B.NUMCPF
+                          ,A.NUMFIS
+                          ,A.NUMCRA
+                          ,A.TIPCRA
+                          ,A.IDTPES
+                    FROM R070CON A
+                    LEFT JOIN R034FUN B ON
+                          B.NUMEMP = A.NUMEMP
+                      AND B.TIPCOL = A.TIPCOL
+                      AND B.NUMCAD = A.NUMCAD
+                    WHERE 1=1
+                      AND A.NUMEMP = 1
+                      AND A.TIPCRA = 1
+                      AND B.TIPCOL = 1
+                      AND B.TIPCON IN (1,10)
+                      AND B.SITAFA NOT IN (7)
+                      AND B.CONRHO = 2
+                    ORDER BY B.NUMCAD"
+        );
+
+        $employeesCreate = [];
+        foreach ($data as $employee) {
+            $templates = (new SeniorOld())->setTable('R070BIO')
+                ->where('idtpes', $employee->idtpes)
+                ->where('codtbi', 2);
+            $employeesCreate['I'][$employee->idtpes] = [
+                'name'           => $employee->nomfun,
+                'pis'            => (int)$employee->numpis,
+                'code'           => 0,
+                'template_count' => $templates->count(),
+                'templates'      => $templates->select()->get()->pluck('tembio')->toArray(),
+                'password'       => "",
+                'admin'          => false,
+                'rfid'           => (int)$employee->numfis,
+                'bars'           => "",
+                "registraion"    => 0
+            ];
+        }
+
+        Log::channel('biometric')->info(
+            "Recarregamento de Biometria: Serão recarregados ".count($employeesCreate['I'])." colaboradores"
+        );
+
+        $http = Http::withoutVerifying()->timeout(9999)->connectTimeout(9999);
+
+        foreach (static::getDevices() as $device) {
+            try {
+                $token = static::getToken($device);
+                $url = "https://$device->numeip".static::$urlExport.$token;
+                $response = $http->post($url, null);
+
+                Log::channel('biometric')->info("Requisição de Exportação: URL $url ");
+                Log::channel('biometric')->info("Requisição Exportação: WITHOUT BODY ");
+                Log::channel('biometric')->info("Requisição Exportação: HTTP {$response->status()}");
+
+                if (!$response->ok()) {
+                    Log::channel('biometric')->info("Requisição Exportação: {$response->body()}");
+                }
+
+                if ($response->ok()) {
+                    Log::channel('biometric')->info("Requisição Exportação: OK");
+                    $i = false;
+                    $employeesDelete = [];
+                    foreach (explode(PHP_EOL, $response->body()) as $data) {
+                        if ($i) {
+                            $data = explode(";", $data);
+                            $pis = (int)($data[0] ?? null);
+                            if ($pis > 0) {
+                                $employeesDelete[] = ['pis' => $pis, 'name' => $data[1] ?? null];
+                            }
+                        }
+                        $i = true;
+                    }
+
+                    foreach (array_chunk($employeesDelete, env('BIOMETRIC_INSERT_CHUNK', 10)) as $employees) {
+                        try {
+                            static::delete($device, $token, collect($employees));
+                        } catch (Exception $e) {
+                            Log::channel('biometric')->info(
+                                "Recarregamento de Biometria: Erro Exclusão ".$e->getMessage()
+                            );
+                            static::delete($device, $token, collect($employees));
+                        }
+                    }
+
+                    foreach (array_chunk($employeesCreate['I'], env('BIOMETRIC_DELETE_CHUNK', 10)) as $employees) {
+                        try {
+                            static::create($device, $token, collect($employees));
+                        } catch (Exception $e) {
+                            Log::channel('biometric')->info(
+                                "Recarregamento de Biometria: Erro Inclusão ".$e->getMessage()
+                            );
+                            Log::channel('biometric')->info("Recarregamento de Biometria: Tentando novamente");
+                            static::create($device, $token, collect($employees));
+                        }
+                    }
+                }
+            } catch (ConnectionException $e) {
+                Log::channel('biometric')->info("Requisição Exportação: Erro ".$e->getMessage());
+            }
+        }
+
+        Log::channel('biometric')->info("Finalizando Processo da Recarregamento de Biometria");
+        Log::channel('biometric')->info(
+            "------------------------------------------------------------------------"
+        );
+    }
+
+    /**
+     * @throws \JsonException
+     */
     private static function create(object $device, string $token, Collection $employees): void
     {
-        $http = Http::withoutVerifying();
+        $http = Http::withoutVerifying()->timeout(9999)->connectTimeout(9999);
 
         if ($employees->isEmpty()) {
             Log::channel('biometric')->info("Requisição Inclusão: Não há informações para serem integradas");
@@ -209,7 +331,7 @@ class BiometricTemplate
      */
     private static function delete(object $device, string $token, Collection $employees): void
     {
-        $http = Http::withoutVerifying();
+        $http = Http::withoutVerifying()->timeout(9999)->connectTimeout(9999);
 
         if ($employees->isEmpty()) {
             Log::channel('biometric')->info("Requisição Exclusão: Não há informações para serem integradas");

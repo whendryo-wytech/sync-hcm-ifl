@@ -93,8 +93,24 @@ class BiometricTemplate
                         Log::channel('biometric')->info("Processo da Biometria: Não foi possível obter o token");
                     }
                     if ($token) {
-                        static::delete($device, $token, collect([...$employees['D'] ?? [], ...$employees['U'] ?? []]));
-                        static::create($device, $token, collect([...$employees['I'] ?? [], ...$employees['U'] ?? []]));
+                        foreach (array_chunk([...$employees['D'] ?? [], ...$employees['U'] ?? []], 1) as $employee) {
+                            try {
+                                static::delete($device, $token, collect($employee));
+                            } catch (Exception $e) {
+                                Log::channel('biometric')->info(
+                                    "Processo de Biometria: Erro Exclusão ".$e->getMessage()
+                                );
+                            }
+                        }
+                        foreach (array_chunk([...$employees['I'] ?? [], ...$employees['U'] ?? []], 1) as $employee) {
+                            try {
+                                static::create($device, $token, collect($employee));
+                            } catch (Exception $e) {
+                                Log::channel('biometric')->info(
+                                    "Processo de Biometria: Erro Inclusão ".$e->getMessage()
+                                );
+                            }
+                        }
                     }
                     Log::channel('biometric')->info("Finalizando Processo da Biometria $deviceName");
                     Log::channel('biometric')->info(

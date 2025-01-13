@@ -190,7 +190,7 @@ class BiometricTemplate
                       AND B.TIPCOL = 1
                       AND B.TIPCON IN (1,10)
                       AND B.SITAFA NOT IN (7)
-                      AND B.CONRHO = 2
+                      AND B.CONRHO IN (1,2)
                     ORDER BY B.NUMCAD"
         );
 

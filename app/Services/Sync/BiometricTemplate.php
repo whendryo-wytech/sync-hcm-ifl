@@ -187,7 +187,7 @@ class BiometricTemplate
     /**
      * @throws \JsonException
      */
-    public static function reload(array $employees): void
+    public static function reload(array $employees, bool $deleteEmployees = true): void
     {
         Log::channel('biometric')->info("Iniciando Processo de Recarregamento de Biometria");
 
@@ -281,7 +281,9 @@ class BiometricTemplate
 
                     foreach (array_chunk($employeesDelete, env('BIOMETRIC_INSERT_CHUNK', 10)) as $employees) {
                         try {
-                            static::delete($device, $token, collect($employees));
+                            if ($deleteEmployees) {
+                                static::delete($device, $token, collect($employees));
+                            }
                         } catch (Exception $e) {
                             Log::channel('biometric')->info(
                                 "Recarregamento de Biometria: Erro Exclusão ".$e->getMessage()

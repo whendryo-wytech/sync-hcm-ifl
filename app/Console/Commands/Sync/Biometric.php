@@ -28,7 +28,7 @@ class Biometric extends Command
     public function handle()
     {
         if ($this->option('reload')) {
-            BiometricTemplate::reload(explode(",", $this->option('employees')));
+            BiometricTemplate::reload(explode(",", $this->option('employees')), !$this->option('no-delete'));
             return;
         }
         BiometricTemplate::handle(!$this->option('no-delete'));

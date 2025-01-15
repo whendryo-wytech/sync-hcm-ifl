@@ -31,8 +31,9 @@ class BiometricTemplate
                 ->get() as $item
         ) {
             $keys = (array)json_decode(Str::lower($item->recordkey), false, 512, JSON_THROW_ON_ERROR);
-            $employee = DB::connection('senior_old')->select(
-                "SELECT A.NUMEMP
+            if ($keys['idtpes'] ?? false) {
+                $employee = DB::connection('senior_old')->select(
+                    "SELECT A.NUMEMP
                               ,A.TIPCOL
                               ,A.NUMCAD
                               ,B.NOMFUN
@@ -49,24 +50,25 @@ class BiometricTemplate
                         WHERE 1=1
                           AND A.TIPCRA = 1
                           AND a.IDTPES = '{$keys['idtpes']}'"
-            );
+                );
 
-            $templates = (new SeniorOld())->setTable('R070BIO')
-                ->where('idtpes', $keys['idtpes'])
-                ->where('codtbi', $keys['codtbi']);
+                $templates = (new SeniorOld())->setTable('R070BIO')
+                    ->where('idtpes', $keys['idtpes'])
+                    ->where('codtbi', $keys['codtbi'] ?? 2);
 
-            $employees[$item->operationkind][$keys['idtpes']] = [
-                'name'           => $employee[0]->nomfun,
-                'pis'            => (int)$employee[0]->numpis,
-                'code'           => 0,
-                'template_count' => $templates->count(),
-                'templates'      => $templates->select()->get()->pluck('tembio')->toArray(),
-                'password'       => "",
-                'admin'          => false,
-                'rfid'           => (int)$employee[0]->numfis,
-                'bars'           => "",
-                "registraion"    => 0
-            ];
+                $employees[$item->operationkind][$keys['idtpes']] = [
+                    'name'           => $employee[0]->nomfun,
+                    'pis'            => (int)$employee[0]->numpis,
+                    'code'           => 0,
+                    'template_count' => $templates->count(),
+                    'templates'      => $templates->select()->get()->pluck('tembio')->toArray(),
+                    'password'       => "",
+                    'admin'          => false,
+                    'rfid'           => (int)$employee[0]->numfis,
+                    'bars'           => "",
+                    "registraion"    => 0
+                ];
+            }
         }
 
         if ($deletePendencies) {

@@ -27,7 +27,7 @@ class BiometricTemplate
         $employees = [];
         foreach (
             (new SeniorOld())->setTable('RTC_PENDENCIES')
-                ->where('TABLENAME', 'R070BIO')
+                ->whereIn('TABLENAME', ['R070BIO', 'R070CON'])
                 ->get() as $item
         ) {
             $keys = (array)json_decode(Str::lower($item->recordkey), false, 512, JSON_THROW_ON_ERROR);

@@ -12,7 +12,7 @@ class Biometric extends Command
      *
      * @var string
      */
-    protected $signature = 'sync:biometric {--no-delete}{--reload}';
+    protected $signature = 'sync:biometric {--no-delete}{--reload}{--employees=}';
 
     /**
      * The console command description.
@@ -28,7 +28,7 @@ class Biometric extends Command
     public function handle()
     {
         if ($this->option('reload')) {
-            BiometricTemplate::reload();
+            BiometricTemplate::reload(explode(",", $this->option('employees')));
             return;
         }
         BiometricTemplate::handle(!$this->option('no-delete'));

@@ -180,9 +180,17 @@ class BiometricTemplate
     /**
      * @throws \JsonException
      */
-    public static function reload(): void
+    public static function reload(array $employees): void
     {
         Log::channel('biometric')->info("Iniciando Processo de Recarregamento de Biometria");
+
+        $sql = implode(",", $employees);
+        if ($sql !== "") {
+            $sql = " AND B.NUMCAD IN ($sql) ";
+        }
+        if ($sql === "") {
+            $sql = " AND 1=1 ";
+        }
 
         $data = DB::connection('senior_old')->select(
             "SELECT A.NUMEMP
@@ -200,7 +208,7 @@ class BiometricTemplate
                           B.NUMEMP = A.NUMEMP
                       AND B.TIPCOL = A.TIPCOL
                       AND B.NUMCAD = A.NUMCAD
-                    WHERE 1=1
+                    WHERE 1=1 $sql
                       AND A.NUMEMP = 1
                       AND A.TIPCRA = 1
                       AND B.TIPCOL = 1

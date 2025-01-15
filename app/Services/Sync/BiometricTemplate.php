@@ -52,22 +52,24 @@ class BiometricTemplate
                           AND a.IDTPES = '{$keys['idtpes']}'"
                 );
 
-                $templates = (new SeniorOld())->setTable('R070BIO')
-                    ->where('idtpes', $keys['idtpes'])
-                    ->where('codtbi', $keys['codtbi'] ?? 2);
+                if ($employee[0] ?? false) {
+                    $templates = (new SeniorOld())->setTable('R070BIO')
+                        ->where('idtpes', $keys['idtpes'])
+                        ->where('codtbi', $keys['codtbi'] ?? 2);
 
-                $employees[$item->operationkind][$keys['idtpes']] = [
-                    'name'           => $employee[0]->nomfun,
-                    'pis'            => (int)$employee[0]->numpis,
-                    'code'           => 0,
-                    'template_count' => $templates->count(),
-                    'templates'      => $templates->select()->get()->pluck('tembio')->toArray(),
-                    'password'       => "",
-                    'admin'          => false,
-                    'rfid'           => (int)$employee[0]->numfis,
-                    'bars'           => "",
-                    "registraion"    => 0
-                ];
+                    $employees[$item->operationkind][$keys['idtpes']] = [
+                        'name'           => $employee[0]->nomfun,
+                        'pis'            => (int)$employee[0]->numpis,
+                        'code'           => 0,
+                        'template_count' => $templates->count(),
+                        'templates'      => $templates->select()->get()->pluck('tembio')->toArray(),
+                        'password'       => "",
+                        'admin'          => false,
+                        'rfid'           => (int)$employee[0]->numfis,
+                        'bars'           => "",
+                        "registraion"    => 0
+                    ];
+                }
             }
         }
 

@@ -74,7 +74,10 @@ class BiometricTemplate
         }
 
         if ($deletePendencies) {
-            (new SeniorOld())->setTable('RTC_PENDENCIES')->where('TABLENAME', 'R070BIO')->delete();
+            (new SeniorOld())
+                ->setTable('RTC_PENDENCIES')
+                ->whereIn('TABLENAME', ['R070BIO', 'R070CON'])
+                ->delete();
         }
 
         try {

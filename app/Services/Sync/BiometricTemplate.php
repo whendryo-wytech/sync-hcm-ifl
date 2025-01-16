@@ -348,6 +348,11 @@ class BiometricTemplate
 
                 if (!$response->ok()) {
                     Log::channel('biometric')->info("Requisição Inclusão: {$response->body()}");
+
+                    if ($response->status() === 401) {
+                        Log::channel('biometric')->info("Requisição Inclusão: Tentando novamente");
+                        static::create($device, $token, $employees);
+                    }
                 }
 
                 if ($response->ok()) {
@@ -385,6 +390,10 @@ class BiometricTemplate
 
                 if (!$response->ok()) {
                     Log::channel('biometric')->info("Requisição Exclusão: {$response->body()}");
+                    if ($response->status() === 401) {
+                        Log::channel('biometric')->info("Requisição Exclusão: Tentando novamente");
+                        static::delete($device, $token, $employees);
+                    }
                 }
 
                 if ($response->ok()) {

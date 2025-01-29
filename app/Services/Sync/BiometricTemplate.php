@@ -279,6 +279,28 @@ class BiometricTemplate
                         $i = true;
                     }
 
+                    foreach (array_chunk($employeesCreate['I'], env('BIOMETRIC_DELETE_CHUNK', 10)) as $employees) {
+                        try {
+                            if ($deleteEmployees) {
+                                static::delete($device, $token, collect($employees));
+                            }
+                        } catch (Exception $e) {
+                            Log::channel('biometric')->info(
+                                "Recarregamento de Biometria: Erro Exclusão ".$e->getMessage()
+                            );
+                            static::delete($device, $token, collect($employees));
+                        }
+                        try {
+                            static::create($device, $token, collect($employees));
+                        } catch (Exception $e) {
+                            Log::channel('biometric')->info(
+                                "Recarregamento de Biometria: Erro Inclusão ".$e->getMessage()
+                            );
+                            Log::channel('biometric')->info("Recarregamento de Biometria: Tentando novamente");
+                            static::create($device, $token, collect($employees));
+                        }
+                    }
+                    /*
                     foreach (array_chunk($employeesDelete, env('BIOMETRIC_INSERT_CHUNK', 10)) as $employees) {
                         try {
                             if ($deleteEmployees) {
@@ -303,6 +325,7 @@ class BiometricTemplate
                             static::create($device, $token, collect($employees));
                         }
                     }
+                    */
                 }
             } catch (ConnectionException $e) {
                 Log::channel('biometric')->info("Requisição Exportação: Erro ".$e->getMessage());
@@ -350,8 +373,11 @@ class BiometricTemplate
                     Log::channel('biometric')->info("Requisição Inclusão: {$response->body()}");
 
                     if ($response->status() === 401) {
-                        Log::channel('biometric')->info("Requisição Inclusão: Tentando novamente");
-                        static::create($device, $token, $employees);
+                        $token = static::getToken($device);
+                        if ($token) {
+                            Log::channel('biometric')->info("Requisição Inclusão: Tentando novamente");
+                            static::create($device, $token, $employees);
+                        }
                     }
                 }
 

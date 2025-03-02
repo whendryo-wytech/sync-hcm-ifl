@@ -44,7 +44,7 @@ services:
                 - '${DB_USERNAME}'
             retries: 3
             timeout: 5s
-    redis:
+    laravel.redis:
         hostname: laravel.redis
         image: 'redis:alpine'
         ports:

@@ -1,0 +1,14 @@
+1) Apagar todos os usuários do REP Mestre (172.017.005.097)
+2) Incluir todos os usuários do REP Mestre
+3) Comparar os usuários do REP Mestre com os usuários do REP que receberá a requisição
+4) Incluir ou atualizar o REP
+5) Excluir os colaboradores que estão no REP e não estão no REP Mestre
+
+----------------------------------------------------------------------------------------------------------------------------
+
+Criar tabela de sessão
+Criar tabela de comparação de usuários
+Criar tabela de status do REP
+Enviar por e-mail o status do REP
+
+

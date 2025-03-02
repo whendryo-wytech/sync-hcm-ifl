@@ -20,6 +20,7 @@ RUN apk update && \
     wget \
     supervisor \
     nginx \
+    nano \
     php83 \
     php83-fpm \
     php83-mbstring \
@@ -74,6 +75,10 @@ RUN sed -i 's/^upload_max_filesize\s*=.*/upload_max_filesize = 100M/' /etc/php83
 RUN sed -i 's/^variables_order\s*=.*/variables_order = EGPCS/' /etc/php83/php.ini
 RUN echo 'pcov.directory = .' >> /etc/php83/php.ini
 RUN echo 'extension=oci8.so' >> /etc/php83/php.ini
+
+# [Cron] - Configuration
+RUN mkdir -p /var/log/cron
+RUN echo '* * * * * /usr/bin/php /app/artisan schedule:run >> /dev/null 2>&1' | crontab -
 
 # Optimizing Image
 RUN apk del gcc musl-dev build-base make g++

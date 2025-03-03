@@ -11,6 +11,8 @@ services:
             - '${VITE_PORT:-5173}:${VITE_PORT:-5173}'
         volumes:
             - '.:/app'
+        cap_add:
+            - NET_ADMIN
         networks:
             sail:
                 ipv4_address: 13.13.13.2

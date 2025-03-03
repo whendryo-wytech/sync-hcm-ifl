@@ -2,7 +2,7 @@
 
 namespace App\Services\Sync;
 
-use App\Models\SeniorOld;
+use App\Models\Senior\SeniorOld;
 use Exception;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Collection;

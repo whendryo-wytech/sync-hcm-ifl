@@ -2,7 +2,6 @@
 
 namespace App\Console\Commands\Database;
 
-use App\Models\SeniorOld;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 

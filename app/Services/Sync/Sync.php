@@ -2,8 +2,8 @@
 
 namespace App\Services\Sync;
 
-use App\Models\SeniorNew;
-use App\Models\SeniorOld;
+use App\Models\Senior\SeniorNew;
+use App\Models\Senior\SeniorOld;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Support\Facades\DB;

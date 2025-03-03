@@ -13,8 +13,13 @@ RUN apk update && \
     apk add --no-cache \
     build-base \
     gcompat \
-    libaio \
+    libaio-dev \
+    g++ \
+    gcc \
+    make \
     zlib-dev \
+    gcompat \
+    libnsl \
     bash \
     curl \
     wget \
@@ -47,8 +52,8 @@ RUN apk update && \
     composer
 
 # [Oracle] - Install Oracle Instant Client
-RUN wget https://download.oracle.com/otn_software/linux/instantclient/2370000/instantclient-basic-linux.x64-23.7.0.25.01.zip -O /tmp/instantclient-basic-linux.zip
-RUN wget https://download.oracle.com/otn_software/linux/instantclient/2370000/instantclient-sdk-linux.x64-23.7.0.25.01.zip -O /tmp/instantclient-sdk-linux.zip
+RUN wget https://download.oracle.com/otn_software/linux/instantclient/2117000/instantclient-basic-linux.x64-21.17.0.0.0dbru.zip -O /tmp/instantclient-basic-linux.zip
+RUN wget https://download.oracle.com/otn_software/linux/instantclient/2117000/instantclient-sdk-linux.x64-21.17.0.0.0dbru.zip  -O /tmp/instantclient-sdk-linux.zip
 RUN mkdir -p /opt/oracle
 RUN unzip -o /tmp/instantclient-basic-linux.zip -d /opt/oracle && mv /opt/oracle/instantclient_* /opt/oracle/instantclient
 RUN rm -rf /opt/oracle/instantclient_*
@@ -56,10 +61,10 @@ RUN unzip -o /tmp/instantclient-sdk-linux.zip -d /opt/oracle && mv /opt/oracle/i
 RUN rm -rf /opt/oracle/instantclient_*
 ENV PATH="/opt/oracle/instantclient:${PATH}"
 ENV LD_LIBRARY_PATH="/opt/oracle/instantclient"
-ENV ORACLE_HOME="/opt/oracle/instantclient"
+ENV ORACLE_HOME="/opt/oracle/instantclient"exit
 RUN chmod -R 755 /opt/oracle/instantclient
 RUN echo "instantclient,/opt/oracle/instantclient,shared" | pecl install oci8
-RUN echo "instantclient,/opt/oracle/instantclient,shared" | pecl install pdo_oci
+#RUN echo "instantclient,/opt/oracle/instantclient,shared" | pecl install pdo_oci
 
 # [Supervisor] - Configuration
 RUN mkdir -p /etc/supervisor/conf.d /var/log/supervisor /var/run/supervisor

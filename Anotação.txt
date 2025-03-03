@@ -1,3 +1,5 @@
+/usr/local/bin/docker-compose up
+
 1) Apagar todos os usuários do REP Mestre (172.017.005.097)
 2) Incluir todos os usuários do REP Mestre
 3) Comparar os usuários do REP Mestre com os usuários do REP que receberá a requisição

@@ -2,8 +2,9 @@
 
 namespace App\Console\Commands\Sandbox;
 
+use App\Jobs\AddUserDevice;
+use App\Models\Main\DeviceUser;
 use Illuminate\Console\Command;
-use Illuminate\Support\Facades\Mail as MailFacade;
 
 class Mail extends Command
 {
@@ -26,8 +27,14 @@ class Mail extends Command
      */
     public function handle(): void
     {
-        MailFacade::raw('Hi, welcome user!', static function ($message) {
-            $message->to("whendryo@wytech.com.br")->subject('teste');
-        });
+        $user = DeviceUser::find(50);
+        AddUserDevice::dispatch($user)
+            ->onQueue('high')
+            ->delay(now()->addSeconds(2));
+
+
+//        MailFacade::raw('Hi, welcome user!', static function ($message) {
+//            $message->to("whendryo@wytech.com.br")->subject('teste');
+//        });
     }
 }

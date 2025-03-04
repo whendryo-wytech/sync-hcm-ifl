@@ -23,10 +23,12 @@ class Clock extends Command
 
     /**
      * Execute the console command.
+     * @throws \JsonException
      */
     public function handle(): void
     {
-        //Devices::getToken(Devices::getMasterDevice())
-        dd(Devices::getMasterDevice());
+        $device = Devices::getMasterDevice();
+        Devices::deleteUsers($device);
+        Devices::addUsers($device);
     }
 }

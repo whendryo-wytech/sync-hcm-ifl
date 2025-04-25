@@ -29,6 +29,13 @@ class DeviceHttp
     ) {
     }
 
+    public function sendChunk(Collection $templates, int $chunk)
+    {
+        foreach ($templates->chunk($chunk) as $chunked) {
+            $this->send($chunked);
+        }
+    }
+
     public function send(Collection $templates): void
     {
         $client = new Client([

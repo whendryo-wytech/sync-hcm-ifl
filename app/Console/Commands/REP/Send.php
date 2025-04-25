@@ -36,7 +36,7 @@ class Send extends Command
             if ($this->option('clear')) {
                 $request = $request->delete($templates->pluck('pis')->toArray());
             }
-            $request->send($templates);
+            $request->sendChunk($templates, 100);
         }
     }
 }

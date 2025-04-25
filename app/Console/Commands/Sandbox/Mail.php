@@ -3,7 +3,7 @@
 namespace App\Console\Commands\Sandbox;
 
 use App\Jobs\AddUserDevice;
-use App\Models\Main\DeviceUser;
+use App\Models\Main\DeviceTemplate;
 use Illuminate\Console\Command;
 
 class Mail extends Command
@@ -27,7 +27,7 @@ class Mail extends Command
      */
     public function handle(): void
     {
-        $user = DeviceUser::find(50);
+        $user = DeviceTemplate::find(50);
         AddUserDevice::dispatch($user)
             ->onQueue('high')
             ->delay(now()->addSeconds(2));

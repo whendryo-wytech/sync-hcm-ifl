@@ -10,15 +10,15 @@ return new class extends Migration {
      */
     public function up(): void
     {
-        Schema::create('device_users', static function (Blueprint $table) {
+        Schema::create('templates', static function (Blueprint $table) {
             $table->id();
             $table->integer('hcm_id');
-            $table->text('name')->nullable();
+            $table->string('name')->nullable();
             $table->string('pis')->nullable();
             $table->string('cpf')->nullable();
             $table->string('rfid')->nullable();
-            $table->text('request')->nullable();
-            $table->text('response')->nullable();
+            $table->longText('template')->nullable();
+            $table->boolean('valid')->default(false);
             $table->timestamps();
         });
     }
@@ -28,6 +28,6 @@ return new class extends Migration {
      */
     public function down(): void
     {
-        Schema::dropIfExists('device_users');
+        Schema::dropIfExists('templates');
     }
 };

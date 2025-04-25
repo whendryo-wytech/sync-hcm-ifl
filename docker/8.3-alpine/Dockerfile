@@ -78,6 +78,9 @@ COPY nginx.conf /etc/nginx/nginx.conf
 RUN sed -i 's/^post_max_size\s*=.*/post_max_size = 100M/' /etc/php83/php.ini
 RUN sed -i 's/^upload_max_filesize\s*=.*/upload_max_filesize = 100M/' /etc/php83/php.ini
 RUN sed -i 's/^variables_order\s*=.*/variables_order = EGPCS/' /etc/php83/php.ini
+RUN sed -i 's/^hard_timeout\s*=.*/hard_timeout = 360/' /etc/php83/php.ini
+RUN sed -i 's/^max_execution_time\s*=.*/max_execution_time = 360/' /etc/php83/php.ini
+RUN sed -i 's/^default_socket_timeout\s*=.*/default_socket_timeout = 360/' /etc/php83/php.ini
 RUN echo 'pcov.directory = .' >> /etc/php83/php.ini
 RUN echo 'extension=oci8.so' >> /etc/php83/php.ini
 

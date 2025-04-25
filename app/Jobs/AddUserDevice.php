@@ -2,21 +2,23 @@
 
 namespace App\Jobs;
 
-use App\Models\Main\DeviceUser;
+use App\Models\Main\DeviceTemplate;
+use App\Services\Clock\DevicesOld;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
-use Illuminate\Support\Facades\Mail as MailFacade;
+use Illuminate\Support\Collection;
 
 class AddUserDevice implements ShouldQueue
 {
     use Queueable;
 
+    public int $timeout = 0;
 
     /**
      * Create a new job instance.
      */
     public function __construct(
-        public DeviceUser $user
+        public DeviceTemplate|Collection $user
     ) {
     }
 
@@ -25,13 +27,19 @@ class AddUserDevice implements ShouldQueue
      */
     public function handle(): void
     {
-        MailFacade::raw('Hi, welcome user!', static function ($message) {
-            $message->to("whendryo@wytech.com.br")->subject('teste');
-        });
+        DevicesOld::addUser($this->user);
     }
 
     public function tags(): array
     {
-        return [$this->user->name, $this->user->cpf, $this->user->device->ip, $this->user->device->name];
+        if ($this->user instanceof Collection) {
+            return $this->user->map(fn($user) => $user->name)->toArray();
+        }
+        return [
+            $this->user->name,
+            $this->user->cpf,
+            $this->user->device->ip,
+            $this->user->device->name
+        ];
     }
 }

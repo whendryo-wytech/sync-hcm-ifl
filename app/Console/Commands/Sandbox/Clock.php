@@ -2,7 +2,7 @@
 
 namespace App\Console\Commands\Sandbox;
 
-use App\Services\Clock\Devices;
+use App\Services\Clock\DevicesOld;
 use Illuminate\Console\Command;
 
 class Clock extends Command
@@ -27,8 +27,13 @@ class Clock extends Command
      */
     public function handle(): void
     {
-        $device = Devices::getMasterDevice();
-        Devices::deleteUsers($device);
-        Devices::addUsers($device);
+//        $device = Devices::getMasterDevice();
+//        Devices::deleteUsers($device);
+//        Devices::addUsers($device, reload: false);
+
+
+        $device = DevicesOld::getDeviceByIp('172.20.2.102');
+        DevicesOld::deleteUsers($device);
+//        Devices::addUsers($device, originLoad: Devices::ORIGIN_MASTER, async: false);
     }
 }

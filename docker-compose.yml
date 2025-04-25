@@ -32,6 +32,7 @@ services:
         volumes:
             - './docker/pgsql/data:/var/lib/postgresql/data'
             - './docker/pgsql/create-testing-database.sql:/docker-entrypoint-initdb.d/10-create-testing-database.sql'
+            - './docker/pgsql/postgresql.conf:/var/lib/postgresql/data/postgresql.conf'
         networks:
             sail:
                 ipv4_address: 13.13.13.3

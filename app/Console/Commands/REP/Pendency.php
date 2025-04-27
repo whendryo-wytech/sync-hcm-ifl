@@ -45,30 +45,32 @@ class Pendency extends Command
                 }, $pendencies->get('employees'))));
                 Log::channel('rep')->info("Cadastros: $ids");
 
-                foreach ((new DeviceGadget())->getDevicesWithoutMaster() as $device) {
-                    $start = Carbon::now();
+                if (count($pendencies->get('pendencies')) > 0) {
+                    foreach ((new DeviceGadget())->getDevicesWithoutMaster() as $device) {
+                        $start = Carbon::now();
 
-                    $templates = $pendencies->get('templates');
+                        $templates = $pendencies->get('templates');
 
-                    $pis = array_values(array_map(static function ($item) {
-                        return (int)$item->numpis;
-                    }, $pendencies->get('employees')));
+                        $pis = array_values(array_map(static function ($item) {
+                            return (int)$item->numpis;
+                        }, $pendencies->get('employees')));
 
-                    $this->info("REP ".$device->hcm_id." Templates: ".count($templates));
+                        $this->info("REP ".$device->hcm_id." Templates: ".count($templates));
 
-                    Log::channel('rep')->info("REP: $device->hcm_id - $device->name - $device->ip");
+                        Log::channel('rep')->info("REP: $device->hcm_id - $device->name - $device->ip");
 
-                    (new DeviceHttp($device))->delete($pis)->sendChunk($templates, 100);
+                        (new DeviceHttp($device))->delete($pis)->sendChunk($templates, 100);
 
-                    Log::channel('rep')->info(
-                        "Tempo de execução: ".($start->diff(Carbon::now()))->forHumans(['parts' => 3])
-                    );
-                    Log::channel('rep')->info("******************************");
-                }
+                        Log::channel('rep')->info(
+                            "Tempo de execução: ".($start->diff(Carbon::now()))->forHumans(['parts' => 3])
+                        );
+                        Log::channel('rep')->info("******************************");
+                    }
 
-                foreach ($pendencies->get('pendencies') as $key => $pendency) {
-                    Log::channel('rep')->info("Limpando pendências");
-                    (new SeniorOld())->setTable('RTC_PENDENCIES')->where('ID', $key)->delete();
+                    foreach ($pendencies->get('pendencies') as $key => $pendency) {
+                        Log::channel('rep')->info("Limpando pendências");
+                        (new SeniorOld())->setTable('RTC_PENDENCIES')->where('ID', $key)->delete();
+                    }
                 }
             });
         } catch (Throwable $e) {

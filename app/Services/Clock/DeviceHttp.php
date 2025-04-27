@@ -14,6 +14,8 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Throwable;
 
+use function Laravel\Prompts\info;
+
 class DeviceHttp
 {
     private const string URL_LOGIN = '/login.fcgi';
@@ -29,7 +31,7 @@ class DeviceHttp
     ) {
     }
 
-    public function sendChunk(Collection $templates, int $chunk)
+    public function sendChunk(Collection $templates, int $chunk): void
     {
         foreach ($templates->chunk($chunk) as $chunked) {
             $this->send($chunked);
@@ -38,48 +40,53 @@ class DeviceHttp
 
     public function send(Collection $templates): void
     {
-        $client = new Client([
-            'verify'          => false,
-            'allow_redirects' => false,
-        ]);
+        try {
+            $client = new Client([
+                'verify'          => false,
+                'allow_redirects' => false,
+            ]);
 
-        $file = $this->saveTemplateFile($templates);
+            $file = $this->saveTemplateFile($templates);
 
-        $fileContent = file_get_contents($file);
+            $fileContent = file_get_contents($file);
 
-        $contentLength = strlen($fileContent);
+            $contentLength = strlen($fileContent);
 
-        $response = $client->request('POST', $this->url(static::URL_IMPORT_CSV), [
-            'headers' => [
-                'Content-Type'   => 'application/octet-stream',
-                'Content-Length' => $contentLength,
-                'Expect'         => '',
-            ],
-            'body'    => $fileContent,
-        ]);
-
-        if ($response->getStatusCode() !== 200) {
-            new DeviceHttpException($response->getBody()->getContents(), $response->getStatusCode(), $response);
+            $response = $client->request('POST', $this->url(static::URL_IMPORT_CSV), [
+                'headers' => [
+                    'Content-Type'   => 'application/octet-stream',
+                    'Content-Length' => $contentLength,
+                    'Expect'         => '',
+                ],
+                'body'    => $fileContent,
+            ]);
+            if ($response->getStatusCode() !== 200) {
+                new DeviceHttpException($response->getBody()->getContents(), $response->getStatusCode(), $response);
+            }
+        } catch (Throwable $e) {
+            new DeviceHttpException($e->getMessage(), $e->getCode(), $e);
         }
     }
 
+    /**
+     * @throws DeviceHttpException
+     */
     public function export(): string
     {
-        $this->login();
+        try {
+            $http = $this->getHttpClient();
 
-        $http = $this->getHttpClient();
 
-        $this->device->refresh();
+            $response = $http->post($this->url(static::URL_EXPORT_CSV), null);
 
-        $url = "https://".$this->device->ip.static::URL_EXPORT_CSV.$this->device->token;
-
-        $response = $http->post($url, null);
-
-        $file = storage_path('app/private/'.Str::uuid()->toString().'.csv');
-        if ($response->ok()) {
-            File::put($file, $response->body());
+            $file = storage_path('app/private/'.Str::uuid()->toString().'.csv');
+            if ($response->ok()) {
+                File::put($file, $response->body());
+            }
+            return $file;
+        } catch (Throwable $e) {
+            throw new DeviceHttpException($e->getMessage(), $e->getCode(), $e);
         }
-        return $file;
     }
 
     public function clear(): DeviceHttp
@@ -94,10 +101,13 @@ class DeviceHttp
         } catch (Throwable $e) {
             new DeviceHttpException($e->getMessage(), $e->getCode(), $e);
         }
+        return $this;
     }
 
     public function delete(array $pis): DeviceHttp
     {
+        info(__METHOD__." - ".json_encode($pis, JSON_THROW_ON_ERROR));
+
         try {
             $payload = [];
             foreach ($pis as $number) {
@@ -111,6 +121,8 @@ class DeviceHttp
             ];
 
             $http = $this->getHttpClient();
+
+            info(__METHOD__." - Awaiting response...");
 
             $response = $http->post($this->url(static::URL_REMOVE_USERS), $payload);
 
@@ -130,15 +142,21 @@ class DeviceHttp
         return $this;
     }
 
-    private function url(string $type): string
+    /**
+     * @throws DeviceHttpException
+     */
+    private function url(string $type, bool $login = true): string
     {
-        $this->login();
-
-        $this->device->refresh();
+        if ($login) {
+            $this->login();
+        }
 
         return "https://".match ($type) {
+                static::URL_LOGIN => $this->device->ip.static::URL_LOGIN,
+                static::URL_SESSION_VALIDATION => $this->device->ip.static::URL_LOGIN.$this->device->token,
                 static::URL_REMOVE_USERS => $this->device->ip.static::URL_REMOVE_USERS.$this->device->token,
                 static::URL_IMPORT_CSV => $this->device->ip.static::URL_IMPORT_CSV.$this->device->token,
+                static::URL_EXPORT_CSV => $this->device->ip.static::URL_EXPORT_CSV.$this->device->token,
                 default => throw new DeviceHttpException('Type not found')
             };
     }
@@ -181,54 +199,72 @@ class DeviceHttp
         return storage_path("app/private/$file");
     }
 
+    /**
+     * @throws DeviceHttpException
+     */
     private function login(int $tries = 0): DeviceHttp
     {
-        if (!$this->validateToken()) {
-            $http = $this->getHttpClient();
+        info(__METHOD__." - $tries");
+        try {
+            if (!$this->validateToken()) {
+                $http = $this->getHttpClient();
 
-            $url = "https://".$this->device->ip.self::URL_LOGIN;
-            $body = [
-                'login'    => env('DEVICE_USER_REP', 'admin'),
-                'password' => env('DEVICE_USER_PASSWORD', 'admin')
-            ];
+                $body = [
+                    'login'    => env('DEVICE_USER_REP', 'admin'),
+                    'password' => env('DEVICE_USER_PASSWORD', 'admin')
+                ];
 
-            $response = $http->post($url, $body);
+                info(__METHOD__." - Awaiting response...");
 
-            if (!$response->ok()) {
-                Log::channel('biometric')->info("[ERRO] Requisição de login: {$response->body()}");
-                if ($tries <= 3) {
-                    sleep(1);
-                    return $this->login($tries + 1);
+                $response = $http->post($this->url(static::URL_LOGIN, false), $body);
+
+                if (!$response->successful()) {
+                    Log::channel('biometric')->info("[ERRO] Requisição de login: {$response->body()}");
+                    if ($tries <= 3) {
+                        sleep(1);
+                        return $this->login($tries + 1);
+                    }
+                    throw new ConnectionException(
+                        "Erro ao tentar se conectar ao dispositivo: foram executadas $tries tentativas."
+                    );
                 }
-                throw new ConnectionException(
-                    "Erro ao tentar se conectar ao dispositivo: foram executadas $tries tentativas."
-                );
-            }
 
-            if ($response->ok()) {
-                $this->device->update(['token' => $response->json('session')]);
+                if ($response->successful()) {
+                    $this->device->update(['token' => $response->json('session')]);
+                    $this->device->refresh();
+                }
+
+                return $this;
             }
 
             return $this;
+        } catch (Throwable $e) {
+            throw new DeviceHttpException($e->getMessage(), $e->getCode(), $e);
         }
-
-        return $this;
     }
 
+    /**
+     * @throws DeviceHttpException
+     */
     private function validateToken(): bool
     {
-        $this->device->refresh();
-        if ($this->device->token) {
-            $http = $this->getHttpClient();
+        info(__METHOD__);
 
-            $url = "https://".$this->device->ip.self::URL_SESSION_VALIDATION.$this->device->token;
+        try {
+            if ($this->device->token) {
+                $http = $this->getHttpClient();
 
-            $response = $http->post($url, null);
-            if ($response->successful()) {
-                return $response->json('session_is_valid');
+                info(__METHOD__." - Awaiting response...");
+
+                $response = $http->post($this->url(static::URL_SESSION_VALIDATION, false), null);
+                if ($response->successful()) {
+                    return $response->json('session_is_valid');
+                }
             }
+            return false;
+        } catch (Throwable $e) {
+            throw new DeviceHttpException($e->getMessage(), $e->getCode(), $e);
         }
-        return false;
     }
 
 }

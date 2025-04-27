@@ -33,7 +33,43 @@ class DeviceTemplate
         }
         return collect($collection);
     }
-    
+
+    public function loadByMaster(): Collection
+    {
+        $file = (new DeviceHttp((new DeviceGadget())->getMaster()))->export();
+
+        $collection = [];
+
+        $columns = [];
+        $firstLine = true;
+        foreach (explode(PHP_EOL, file_get_contents($file)) as $line) {
+            $data = [];
+            foreach (explode(";", $line) as $key => $item) {
+                if ($firstLine && empty($columns[$key])) {
+                    $columns[$key] = trim($item);
+                }
+                if (!$firstLine) {
+                    $data[$columns[$key]] = $item;
+                }
+            }
+            if ($data['matricula'] ?? false) {
+                Template::where('hcm_id', $data['matricula'])->update(['valid' => true]);
+            }
+            $firstLine = false;
+        }
+
+        return $this->getTemplates();
+    }
+
+    public function getTemplates(string $employees = null): Collection
+    {
+        $sql = " 1=1 ";
+        if ($employees) {
+            $sql = " HCM_ID IN ($employees) ";
+        }
+        return collect(Template::where('valid', true)->whereRaw($sql)->get()->toArray());
+    }
+
     private function getSenior(string $employees = null): Collection
     {
         $collection = [];

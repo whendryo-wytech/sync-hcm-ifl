@@ -2,6 +2,7 @@
 
 namespace App\Services\Clock;
 
+use App\Models\Main\Device;
 use App\Models\Main\Device as DeviceModel;
 use App\Models\Senior\R058RLG;
 use Illuminate\Support\Collection;
@@ -13,15 +14,32 @@ class DeviceGadget
     {
         $collection = [];
         foreach ($this->getSenior($devices) as $device) {
-            $collection[] = DeviceModel::updateOrCreate([
-                'hcm_id' => $device->codrlg
-            ], [
-                'hcm_id' => $device->codrlg,
-                'name'   => $device->desrlg,
-                'ip'     => $device->numeip,
-            ]);
+            if ((int)$device->comrlg === 1) {
+                $collection[] = DeviceModel::updateOrCreate([
+                    'hcm_id' => $device->codrlg
+                ], [
+                    'hcm_id' => $device->codrlg,
+                    'name'   => $device->desrlg,
+                    'ip'     => $device->numeip,
+                ]);
+            }
+            if ((int)$device->comrlg === 3) {
+                DeviceModel::where('hcm_id', $device->codrlg)->delete();
+            }
         }
         return collect($collection);
+    }
+
+    public function getMaster(): DeviceModel
+    {
+        return DeviceModel::where('hcm_id', env('DEVICE_MASTER_REP'))->first();
+    }
+
+    public function getDevicesWithoutMaster(): Collection
+    {
+        return Device::where('hcm_id', '<>', env('DEVICE_MASTER_REP'))
+            ->whereNotIn('hcm_id', explode(',', env('DEVICE_SLOW', '0')))
+            ->orderBy('hcm_id')->get();
     }
 
     private function getSenior(string $devices = null): Collection
@@ -36,6 +54,7 @@ class DeviceGadget
             ->select(
                 'codrlg',
                 'desrlg',
+                'comrlg',
                 DB::raw('regexp_replace(numeip, \'0*([0-9]+)\', \'\\1\') AS numeip')
             )->get();
     }

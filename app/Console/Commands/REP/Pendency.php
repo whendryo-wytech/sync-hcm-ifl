@@ -67,8 +67,9 @@ class Pendency extends Command
                         Log::channel('rep')->info("******************************");
                     }
 
+                    Log::channel('rep')->info("Limpando pendências");
                     foreach ($pendencies->get('pendencies') as $key => $pendency) {
-                        Log::channel('rep')->info("Limpando pendências");
+                        Log::channel('rep')->info("Limpando pendência: $key");
                         (new SeniorOld())->setTable('RTC_PENDENCIES')->where('ID', $key)->delete();
                     }
                 }

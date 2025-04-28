@@ -4,6 +4,7 @@ namespace App\Services\Clock;
 
 use App\Exceptions\DeviceHttpException;
 use App\Models\Main\Device;
+use Carbon\Carbon;
 use GuzzleHttp\Client;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\PendingRequest;
@@ -25,6 +26,7 @@ class DeviceHttp
     private const string URL_EXPORT_CSV = '/export_users_csv.fcgi?session=';
     private const string URL_IMPORT_CSV = '/import_users_csv.fcgi?session=';
     private const string URL_LOAD_USERS = '/load_users.fcgi?session=';
+    private const string URL_AFD = '/get_afd.fcgi?session=';
 
     public function __construct(
         private readonly Device $device
@@ -60,6 +62,10 @@ class DeviceHttp
                 ],
                 'body'    => $fileContent,
             ]);
+
+            dump($response->getStatusCode());
+            dump($response->getBody()->getContents());
+
             if ($response->getStatusCode() !== 200) {
                 new DeviceHttpException($response->getBody()->getContents(), $response->getStatusCode(), $response);
             }
@@ -145,6 +151,56 @@ class DeviceHttp
     /**
      * @throws DeviceHttpException
      */
+    public function afd(string $startDate = null): string
+    {
+        info(__METHOD__." - ".$startDate);
+
+        try {
+            $date = Carbon::createFromFormat(
+                'Y-m-d',
+                ($startDate ?? Carbon::now()->subDays(env('DEVICE_BEFORE_DAYS_AFD', 5))->format('Y-m-d'))
+            );
+
+            $payload = [
+                "initial_date" => [
+                    "day"   => (int)$date?->format('d'),
+                    "month" => (int)$date?->format('m'),
+                    "year"  => (int)$date?->format('Y')
+                ]
+            ];
+
+            dump($payload);
+
+            $http = $this->getHttpClient();
+
+            info(__METHOD__." - Awaiting response...");
+
+            $response = $http->post($this->url(static::URL_AFD), $payload);
+
+            if ($response->successful()) {
+                return $response->body();
+            }
+
+            if (!$response->successful()) {
+                Log::channel('biometric')->info(
+                    "[ERRO] ".__METHOD__." - ".json_encode(
+                        $response->body(),
+                        JSON_THROW_ON_ERROR
+                    )
+                );
+                throw new DeviceHttpException($response->body(), $response->getStatusCode(), $response);
+            }
+        } catch (Throwable $e) {
+            dd($e->getMessage());
+            new DeviceHttpException($e->getMessage(), $e->getCode(), $e);
+        }
+
+        throw new DeviceHttpException("AFD não gerado");
+    }
+
+    /**
+     * @throws DeviceHttpException
+     */
     private function url(string $type, bool $login = true): string
     {
         if ($login) {
@@ -157,6 +213,7 @@ class DeviceHttp
                 static::URL_REMOVE_USERS => $this->device->ip.static::URL_REMOVE_USERS.$this->device->token,
                 static::URL_IMPORT_CSV => $this->device->ip.static::URL_IMPORT_CSV.$this->device->token,
                 static::URL_EXPORT_CSV => $this->device->ip.static::URL_EXPORT_CSV.$this->device->token,
+                static::URL_AFD => $this->device->ip.static::URL_AFD.$this->device->token,
                 default => throw new DeviceHttpException('Type not found')
             };
     }

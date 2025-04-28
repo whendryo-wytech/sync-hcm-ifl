@@ -61,13 +61,20 @@ class DeviceTemplate
         return $this->getTemplates();
     }
 
-    public function getTemplates(string $employees = null): Collection
+    public function getTemplates(string $employees = null, bool $onlyValid = false): Collection
     {
         $sql = " 1=1 ";
         if ($employees) {
             $sql = " HCM_ID IN ($employees) ";
         }
-        return collect(Template::where('valid', true)->whereRaw($sql)->get()->toArray());
+
+        $template = (new Template());
+        if ($onlyValid) {
+            $template = $template->where('valid', true);
+        }
+        $template = $template->whereRaw($sql)->get()->toArray();
+
+        return collect($template);
     }
 
     private function getSenior(string $employees = null): Collection

@@ -72,7 +72,7 @@ class DeviceTemplate
         if ($onlyValid) {
             $template = $template->where('valid', true);
         }
-        $template = $template->whereRaw($sql)->get()->toArray();
+        $template = $template->whereRaw($sql)->get();
 
         return collect($template);
     }

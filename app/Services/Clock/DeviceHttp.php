@@ -237,8 +237,7 @@ class DeviceHttp
 
         try {
             foreach ($templates as $template) {
-                dump($template);
-                $data = (object)json_decode($template->template, false, 512, JSON_THROW_ON_ERROR);
+                $data = json_decode($template->template, false, 512, JSON_THROW_ON_ERROR);
                 File::append(
                     storage_path("app/private/$file"),
                     rtrim(
@@ -250,7 +249,6 @@ class DeviceHttp
                 );
             }
         } catch (Throwable $e) {
-            dd($e->getMessage());
             new DeviceHttpException($e->getMessage(), $e->getCode(), $e);
         }
 

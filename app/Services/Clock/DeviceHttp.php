@@ -42,7 +42,6 @@ class DeviceHttp
 
     public function send(Collection $templates): void
     {
-        dd($templates);
         try {
             $client = new Client([
                 'verify'          => false,
@@ -239,6 +238,7 @@ class DeviceHttp
         try {
             foreach ($templates as $template) {
                 $data = json_decode($template->template, false, 512, JSON_THROW_ON_ERROR);
+                dd($data);
                 File::append(
                     storage_path("app/private/$file"),
                     rtrim(

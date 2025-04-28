@@ -63,9 +63,6 @@ class DeviceHttp
                 'body'    => $fileContent,
             ]);
 
-            dump($response->getStatusCode());
-            dump($response->getBody()->getContents());
-
             if ($response->getStatusCode() !== 200) {
                 new DeviceHttpException($response->getBody()->getContents(), $response->getStatusCode(), $response);
             }

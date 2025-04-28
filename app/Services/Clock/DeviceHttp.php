@@ -42,6 +42,7 @@ class DeviceHttp
 
     public function send(Collection $templates): void
     {
+        dd($templates);
         try {
             $client = new Client([
                 'verify'          => false,

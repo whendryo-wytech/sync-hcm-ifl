@@ -52,8 +52,6 @@ class Send extends Command
         }
         $templates = empty($templates) ? (new DeviceTemplate())->getTemplates($this->option('employees')) : $templates;
 
-        dd($templates);
-
         foreach ($devices as $device) {
             $this->info("REP ".$device->hcm_id." Templates: ".count($templates));
             $request = (new DeviceHttp($device));

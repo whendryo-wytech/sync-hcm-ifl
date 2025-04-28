@@ -63,9 +63,6 @@ class DeviceHttp
                 'body'    => $fileContent,
             ]);
 
-            dump($response->getStatusCode());
-            dump($response->getBody()->getContents());
-
             if ($response->getStatusCode() !== 200) {
                 new DeviceHttpException($response->getBody()->getContents(), $response->getStatusCode(), $response);
             }
@@ -81,8 +78,7 @@ class DeviceHttp
     {
         try {
             $http = $this->getHttpClient();
-
-
+            
             $response = $http->post($this->url(static::URL_EXPORT_CSV), null);
 
             $file = storage_path('app/private/'.Str::uuid()->toString().'.csv');

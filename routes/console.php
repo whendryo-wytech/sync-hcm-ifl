@@ -7,4 +7,4 @@ use Illuminate\Support\Facades\Schedule;
 //})->everySecond();
 
 Schedule::command('rep:pendency')->everyTwoMinutes()->withoutOverlapping();
-Schedule::command('run:sync')->dailyAt('22:00');
+Schedule::command('sync:run')->dailyAt('22:00');

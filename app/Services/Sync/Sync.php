@@ -2,6 +2,8 @@
 
 namespace App\Services\Sync;
 
+ini_set('memory_limit', '-1');
+
 use App\Models\Senior\SeniorNew;
 use App\Models\Senior\SeniorOld;
 use Carbon\Carbon;

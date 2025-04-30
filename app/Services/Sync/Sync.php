@@ -16,6 +16,8 @@ use Illuminate\Support\Str;
 use Symfony\Component\Console\Helper\ProgressBar;
 use Symfony\Component\Console\Output\ConsoleOutput;
 
+use function Laravel\Prompts\info as infoAlias;
+
 class Sync
 {
 
@@ -143,6 +145,7 @@ class Sync
                 ->select(DB::raw($columns->raw))
                 ->get()
                 ->toArray();
+            infoAlias($table);
             $progressBar = new ProgressBar(new ConsoleOutput(), count($rows));
             $progressBar->start();
             foreach ($rows as $row) {

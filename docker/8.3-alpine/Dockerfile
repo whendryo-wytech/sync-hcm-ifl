@@ -81,6 +81,7 @@ RUN sed -i 's/^variables_order\s*=.*/variables_order = EGPCS/' /etc/php83/php.in
 RUN sed -i 's/^hard_timeout\s*=.*/hard_timeout = 360/' /etc/php83/php.ini
 RUN sed -i 's/^max_execution_time\s*=.*/max_execution_time = 360/' /etc/php83/php.ini
 RUN sed -i 's/^default_socket_timeout\s*=.*/default_socket_timeout = 360/' /etc/php83/php.ini
+RUN sed -i 's/^memory_limit\s*=.*/memory_limit = 512M/' /etc/php83/php.ini
 RUN echo 'pcov.directory = .' >> /etc/php83/php.ini
 RUN echo 'extension=oci8.so' >> /etc/php83/php.ini
 

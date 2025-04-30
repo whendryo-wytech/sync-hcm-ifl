@@ -2,8 +2,9 @@
 
 use Illuminate\Support\Facades\Schedule;
 
-Schedule::call(static function () {
-//    File::put(storage_path('logs/'.date('YmdHis')).'.txt', now());
-})->everySecond();
+//Schedule::call(static function () {
+////    File::put(storage_path('logs/'.date('YmdHis')).'.txt', now());
+//})->everySecond();
 
 Schedule::command('rep:pendency')->everyTwoMinutes()->withoutOverlapping();
+Schedule::command('run:sync')->dailyAt('22:00');

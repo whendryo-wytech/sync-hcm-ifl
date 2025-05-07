@@ -105,6 +105,8 @@ class DeviceTemplate
 
                 $firstLine = false;
             }
+            info(__METHOD__." Send templates...");
+            (new DeviceHttp($device))->sendChunk(Template::all(), 100);
         }
     }
 

@@ -43,7 +43,7 @@ class DeviceGadget
 
         $devices = Device::where('hcm_id', '<>', env('DEVICE_MASTER_REP'))->whereRaw($sql);
 
-        if ($withSlow) {
+        if (!$withSlow) {
             $devices = $devices->whereNotIn('hcm_id', explode(',', env('DEVICE_SLOW', '0')));
         }
 
@@ -56,7 +56,7 @@ class DeviceGadget
         if ($devices) {
             $sql = " hcm_id IN ($devices) ";
         }
-        
+
         return Device::whereRaw($sql)->orderBy('hcm_id')->get();
     }
 

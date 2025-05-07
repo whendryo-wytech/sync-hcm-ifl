@@ -96,7 +96,7 @@ class DeviceTemplate
                 }
 
                 if (!Template::where('pis', $data['pis'] ?? '')->exists()) {
-                    $collection[] = $data['pis'];
+                    $collection[] = $data['pis'] ?? '';
                 }
 
                 $firstLine = false;

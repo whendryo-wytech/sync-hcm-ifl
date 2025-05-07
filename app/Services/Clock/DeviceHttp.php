@@ -63,6 +63,14 @@ class DeviceHttp
                 'body'    => $fileContent,
             ]);
 
+
+            info(
+                __METHOD__." - Response received... body: ".json_encode(
+                    $response->getBody()->getContents(),
+                    JSON_THROW_ON_ERROR
+                )
+            );
+
             if ($response->getStatusCode() !== 200) {
                 new DeviceHttpException($response->getBody()->getContents(), $response->getStatusCode(), $response);
             }

@@ -6,5 +6,5 @@ use Illuminate\Support\Facades\Schedule;
 ////    File::put(storage_path('logs/'.date('YmdHis')).'.txt', now());
 //})->everySecond();
 
-Schedule::command('rep:pendency')->everyTwoMinutes()->withoutOverlapping();
+//Schedule::command('rep:pendency')->everyTwoMinutes()->withoutOverlapping();
 Schedule::command('sync:run')->dailyAt('22:00');

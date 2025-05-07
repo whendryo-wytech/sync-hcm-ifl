@@ -10,6 +10,8 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Throwable;
 
+use function Laravel\Prompts\info;
+
 class DeviceTemplate
 {
 
@@ -40,31 +42,70 @@ class DeviceTemplate
      */
     public function loadByMaster(): void
     {
-        $file = (new DeviceHttp((new DeviceGadget())->getMaster()))->export();
+        if (false) {
+            info(__METHOD__);
 
-        Template::where('id', '>', 0)->update(['valid' => false]);
+            $file = (new DeviceHttp((new DeviceGadget())->getMaster()))->export();
 
-        $collection = [];
+            Template::where('id', '>', 0)->update(['valid' => false]);
 
-        $columns = [];
-        $firstLine = true;
-        foreach (explode(PHP_EOL, file_get_contents($file)) as $line) {
-            $data = [];
-            foreach (explode(";", $line) as $key => $item) {
-                if ($firstLine && empty($columns[$key])) {
-                    $columns[$key] = trim($item);
+            $collection = [];
+
+            info(__METHOD__." Validating templates...");
+
+            $columns = [];
+            $firstLine = true;
+            foreach (explode(PHP_EOL, file_get_contents($file)) as $line) {
+                $data = [];
+                foreach (explode(";", $line) as $key => $item) {
+                    if ($firstLine && empty($columns[$key])) {
+                        $columns[$key] = trim($item);
+                    }
+                    if (!$firstLine) {
+                        $data[$columns[$key]] = $item;
+                    }
                 }
-                if (!$firstLine) {
-                    $data[$columns[$key]] = $item;
+                if ($data['matricula'] ?? false) {
+                    info(__METHOD__." Code $data[matricula] is valid...");
+                    Template::where('hcm_id', $data['matricula'])->update(['valid' => true]);
                 }
+                $firstLine = false;
             }
-            if ($data['matricula'] ?? false) {
-                Template::where('hcm_id', $data['matricula'])->update(['valid' => true]);
-            }
-            $firstLine = false;
+
+            Template::where('valid', false)->delete();
         }
 
-        Template::where('valid', false)->delete();
+        foreach ((new DeviceGadget())->getDevicesWithoutMaster() as $device) {
+            $file = (new DeviceHttp($device))->export();
+
+            info(__METHOD__." Sync with ...".$device->id);
+
+            $collection = [];
+
+            $columns = [];
+            $firstLine = true;
+            foreach (explode(PHP_EOL, file_get_contents($file)) as $line) {
+                $data = [];
+                foreach (explode(";", $line) as $key => $item) {
+                    if ($firstLine && empty($columns[$key])) {
+                        $columns[$key] = trim($item);
+                    }
+                    if (!$firstLine) {
+                        $data[$columns[$key]] = $item;
+                    }
+                }
+
+                if (!Template::where('pis', $data['pis'] ?? '')->exists()) {
+                    try {
+                        info(__METHOD__." Delete $data[pis]...");
+                        (new DeviceHttp($device))->delete([$data['pis'] ?? '']);
+                    } catch (Throwable $e) {
+                    }
+                }
+
+                $firstLine = false;
+            }
+        }
     }
 
     public function getTemplates(string $employees = null, bool $onlyValid = false): Collection

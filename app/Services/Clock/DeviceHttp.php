@@ -277,7 +277,7 @@ class DeviceHttp
                         JSON_THROW_ON_ERROR
                     )
                 );
-                
+
                 if (!$response->successful()) {
                     Log::channel('biometric')->info("[ERRO] Requisição de login: {$response->body()}");
                     if ($tries <= 3) {
@@ -292,6 +292,7 @@ class DeviceHttp
                 if ($response->successful()) {
                     info(__METHOD__." - Token: ".$response->json('session'));
                     $this->device->update(['token' => $response->json('session')]);
+                    info(__METHOD__." - Device updated successfully. ");
                     $this->device->refresh();
                 }
 

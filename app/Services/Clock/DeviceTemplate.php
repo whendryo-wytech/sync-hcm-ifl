@@ -2,6 +2,7 @@
 
 namespace App\Services\Clock;
 
+use App\Exceptions\DeviceHttpException;
 use App\Models\Main\Template;
 use App\Models\Senior\R070BIO;
 use Illuminate\Support\Collection;
@@ -34,9 +35,14 @@ class DeviceTemplate
         return collect($collection);
     }
 
-    public function loadByMaster(): Collection
+    /**
+     * @throws DeviceHttpException
+     */
+    public function loadByMaster(): void
     {
         $file = (new DeviceHttp((new DeviceGadget())->getMaster()))->export();
+
+        Template::where('id', '>', 0)->update(['valid' => false]);
 
         $collection = [];
 
@@ -58,7 +64,7 @@ class DeviceTemplate
             $firstLine = false;
         }
 
-        return $this->getTemplates();
+        Template::where('valid', false)->delete();
     }
 
     public function getTemplates(string $employees = null, bool $onlyValid = false): Collection

@@ -57,6 +57,9 @@ class DeviceGadget
             $sql = " hcm_id IN ($devices) ";
         }
 
+        dump($devices);
+        dump($sql);
+
         return Device::whereRaw($sql)->orderBy('hcm_id')->get();
     }
 

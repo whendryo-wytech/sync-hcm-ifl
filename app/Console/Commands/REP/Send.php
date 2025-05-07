@@ -16,7 +16,7 @@ class Send extends Command
      *
      * @var string
      */
-    protected $signature = 'rep:send {--clear} {--devices=} {--ips=} {--employees=}';
+    protected $signature = 'rep:send {--clear} {--devices=} {--ips=} {--employees=}{--with-slow}';
 
     /**
      * The console command description.
@@ -37,6 +37,9 @@ class Send extends Command
             )->toArray()
         );
         $devices = (new DeviceGadget())->load($devices);
+        if ($this->option('with-slow')) {
+            $devices = (new DeviceGadget())->getDevicesWithoutMaster($devices, true);
+        }
 
         if ($devices->count() > 1) {
             foreach ($devices as $device) {

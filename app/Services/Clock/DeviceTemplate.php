@@ -96,15 +96,18 @@ class DeviceTemplate
                 }
 
                 if (!Template::where('pis', $data['pis'] ?? '')->exists()) {
-                    try {
-                        info(__METHOD__." Delete $data[pis]...");
-                        (new DeviceHttp($device))->delete([$data['pis'] ?? '']);
-                    } catch (Throwable $e) {
-                    }
+                    $collection[] = $data['pis'];
                 }
 
                 $firstLine = false;
             }
+
+            try {
+                info(__METHOD__." Delete templates ".implode(',', $collection));
+                (new DeviceHttp($device))->delete([$collection]);
+            } catch (Throwable $e) {
+            }
+
             info(__METHOD__." Send templates...");
             (new DeviceHttp($device))->sendChunk(Template::all(), 100);
         }

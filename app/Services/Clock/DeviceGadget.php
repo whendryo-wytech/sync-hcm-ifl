@@ -27,7 +27,7 @@ class DeviceGadget
                 DeviceModel::where('hcm_id', $device->codrlg)->delete();
             }
         }
-        return collect($collection);
+        return $this->getDevicesWithoutMaster($devices);
     }
 
     public function getMaster(): DeviceModel
@@ -35,11 +35,17 @@ class DeviceGadget
         return DeviceModel::where('hcm_id', env('DEVICE_MASTER_REP'))->first();
     }
 
-    public function getDevicesWithoutMaster(): Collection
+    public function getDevicesWithoutMaster(string $devices = null): Collection
     {
+        $sql = " 1=1 ";
+        if ($devices) {
+            $sql = " hcm_id IN ($devices) ";
+        }
         return Device::where('hcm_id', '<>', env('DEVICE_MASTER_REP'))
+            ->whereRaw($sql)
             ->whereNotIn('hcm_id', explode(',', env('DEVICE_SLOW', '0')))
-            ->orderBy('hcm_id')->get();
+            ->orderBy('hcm_id')
+            ->get();
     }
 
     private function getSenior(string $devices = null): Collection

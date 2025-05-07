@@ -267,9 +267,11 @@ class DeviceHttp
                     'password' => env('DEVICE_USER_PASSWORD', 'admin')
                 ];
 
-                info(__METHOD__." - Awaiting response...");
+                info(__METHOD__." - Awaiting response... body: ".json_encode($body, JSON_THROW_ON_ERROR));
 
                 $response = $http->post($this->url(static::URL_LOGIN, false), $body);
+
+                info(__METHOD__." - Response received... body: ".json_encode($body, JSON_THROW_ON_ERROR));
 
                 if (!$response->successful()) {
                     Log::channel('biometric')->info("[ERRO] Requisição de login: {$response->body()}");

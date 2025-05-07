@@ -38,7 +38,7 @@ class Send extends Command
         );
         $devices = (new DeviceGadget())->load($devices);
         if ($this->option('with-slow')) {
-            $devices = (new DeviceGadget())->getDevicesWithoutMaster($devices, true);
+            $devices = (new DeviceGadget())->getDevices($devices);
         }
 
         if ($devices->count() > 1) {

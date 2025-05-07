@@ -3,6 +3,8 @@
 namespace App\Services\Clock;
 
 use App\Models\Main\Device;
+use App\Models\Main\Device;
+use App\Models\Main\Device;
 use App\Models\Main\Device as DeviceModel;
 use App\Models\Senior\R058RLG;
 use Illuminate\Support\Collection;
@@ -49,6 +51,16 @@ class DeviceGadget
         }
 
         return $devices->orderBy('hcm_id')->get();
+    }
+
+    public function getDevices(string $devices = null): Collection
+    {
+        $sql = " 1=1 ";
+        if ($devices) {
+            $sql = " hcm_id IN ($devices) ";
+        }
+
+        return Device::whereRaw($sql)->orderBy('hcm_id')->get();
     }
 
     private function getSenior(string $devices = null): Collection

@@ -3,9 +3,6 @@
 namespace App\Services\Clock;
 
 use App\Models\Main\Device;
-use App\Models\Main\Device;
-use App\Models\Main\Device;
-use App\Models\Main\Device as DeviceModel;
 use App\Models\Senior\R058RLG;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
@@ -17,7 +14,7 @@ class DeviceGadget
         $collection = [];
         foreach ($this->getSenior($devices) as $device) {
             if ((int)$device->comrlg === 1) {
-                $collection[] = DeviceModel::updateOrCreate([
+                $collection[] = Device::updateOrCreate([
                     'hcm_id' => $device->codrlg
                 ], [
                     'hcm_id' => $device->codrlg,
@@ -26,15 +23,15 @@ class DeviceGadget
                 ]);
             }
             if ((int)$device->comrlg === 3) {
-                DeviceModel::where('hcm_id', $device->codrlg)->delete();
+                Device::where('hcm_id', $device->codrlg)->delete();
             }
         }
         return $this->getDevicesWithoutMaster($devices);
     }
 
-    public function getMaster(): DeviceModel
+    public function getMaster(): Device
     {
-        return DeviceModel::where('hcm_id', env('DEVICE_MASTER_REP'))->first();
+        return Device::where('hcm_id', env('DEVICE_MASTER_REP'))->first();
     }
 
     public function getDevicesWithoutMaster(string $devices = null, $withSlow = false): Collection

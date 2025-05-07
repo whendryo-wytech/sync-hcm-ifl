@@ -2,14 +2,8 @@
 
 namespace App\Console\Commands\REP;
 
-use App\Models\Senior\SeniorOld;
-use App\Services\Clock\DeviceGadget;
-use App\Services\Clock\DeviceHttp;
 use App\Services\Clock\DevicePendency;
-use Carbon\Carbon;
 use Illuminate\Console\Command;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
 use Throwable;
 
 class Pendency extends Command
@@ -34,6 +28,10 @@ class Pendency extends Command
      */
     public function handle(): void
     {
+        $pendencies = (new DevicePendency())->getPendencies();
+
+        dd($pendencies);
+        /*
         Log::channel('rep')->info("Iniciando Sincronia de Pendências");
         try {
             DB::transaction(function () {
@@ -79,5 +77,6 @@ class Pendency extends Command
         }
         Log::channel('rep')->info("Finalizando Sincronia de Pendências");
         Log::channel('rep')->info("-----------------------------------------------");
+        */
     }
 }

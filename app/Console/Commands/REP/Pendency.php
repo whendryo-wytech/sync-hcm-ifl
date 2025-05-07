@@ -30,7 +30,7 @@ class Pendency extends Command
     {
         $pendencies = (new DevicePendency())->getPendencies();
 
-        dd($pendencies);
+        dd(implode(',', $pendencies->pluck('hcm_id')->toArray()));
         /*
         Log::channel('rep')->info("Iniciando Sincronia de Pendências");
         try {

@@ -4,6 +4,7 @@ namespace App\Console\Commands\REP;
 
 use App\Services\Clock\DevicePendency;
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\Artisan;
 use Throwable;
 
 class Pendency extends Command
@@ -29,8 +30,9 @@ class Pendency extends Command
     public function handle(): void
     {
         $pendencies = (new DevicePendency())->getPendencies();
+        $employees = implode(',', array_keys($pendencies->get('employees')));
 
-        dd(implode(',', array_keys($pendencies->get('employees'))));
+        Artisan::call("rep:send --employees=$employees");
         /*
         Log::channel('rep')->info("Iniciando Sincronia de Pendências");
         try {

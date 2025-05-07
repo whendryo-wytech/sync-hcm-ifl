@@ -36,8 +36,8 @@ class Send extends Command
                 'hcm_id'
             )->toArray()
         );
-        dump($devices);
         $devices = (new DeviceGadget())->load($devices);
+        dump($this->option('with-slow'));
         if ($this->option('with-slow')) {
             $devices = (new DeviceGadget())->getDevices($devices);
         }

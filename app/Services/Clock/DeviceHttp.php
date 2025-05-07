@@ -271,8 +271,13 @@ class DeviceHttp
 
                 $response = $http->post($this->url(static::URL_LOGIN, false), $body);
 
-                info(__METHOD__." - Response received... body: ".json_encode($body, JSON_THROW_ON_ERROR));
-
+                info(
+                    __METHOD__." - Response received... status: ".$response->getStatusCode()." body: ".json_encode(
+                        $body,
+                        JSON_THROW_ON_ERROR
+                    )
+                );
+                
                 if (!$response->successful()) {
                     Log::channel('biometric')->info("[ERRO] Requisição de login: {$response->body()}");
                     if ($tries <= 3) {
@@ -285,9 +290,12 @@ class DeviceHttp
                 }
 
                 if ($response->successful()) {
+                    info(__METHOD__." - Token: ".$response->json('session'));
                     $this->device->update(['token' => $response->json('session')]);
                     $this->device->refresh();
                 }
+
+                info(__METHOD__." - Finished ");
 
                 return $this;
             }

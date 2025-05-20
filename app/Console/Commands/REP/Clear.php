@@ -27,7 +27,7 @@ class Clear extends Command
      */
     public function handle(): void
     {
-        $devices = (new DeviceGadget())->load($this->option('devices'));
+        $devices = (new DeviceGadget())->getDevices($this->option('devices'));
 
         foreach ($devices as $device) {
             (new DeviceHttp($device))->clear();
